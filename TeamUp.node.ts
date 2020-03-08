@@ -21,6 +21,7 @@ export class TeamUp implements INodeType {
 		icon: 'file:teamup.png',
 		group: ['output'],
 		version: 1,
+		subtitle: '={{$parameter["apiType"] + "/" + $parameter["targetId"]}}',
 		description: '팀업 API를 사용해 알림을 보내기',
 		defaults: {
 			name: 'TeamUP',
