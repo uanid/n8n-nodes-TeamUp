@@ -21,8 +21,8 @@ export function isAccessTokenExpired(this: IExecuteFunctions): boolean {
     let expiresSeconds = staticData.teamUpAccessTokenExpiresSeconds;
     let currentSeconds = Math.floor(new Date().getTime() / 1000);
 
-    console.log("accessToken: " + accessToken);
-    console.log("expiresSeconds: " + expiresSeconds);
+    // console.log("accessToken: " + accessToken);
+    // console.log("expiresSeconds: " + expiresSeconds);
 
     if (accessToken === undefined || expiresSeconds === undefined) {
         return true;
@@ -36,10 +36,8 @@ export function isAccessTokenExpired(this: IExecuteFunctions): boolean {
 }
 
 export async function getAccessToken(this: IExecuteFunctions): Promise<string> {
-    console.log("getAccessToken called");
-
     if (isAccessTokenExpired.call(this)) {
-        console.log("Token is Expired");
+        console.log("AccessToken is Expired, create new token");
 
         const credentials = this.getCredentials('teamUpApi');
         if (credentials === undefined) {
@@ -75,7 +73,7 @@ export async function getAccessToken(this: IExecuteFunctions): Promise<string> {
             let staticData = this.getWorkflowStaticData('global');
             staticData.teamUpAccessToken = jsonResponse['access_token'];
             staticData.teamUpAccessTokenExpiresSeconds = Math.floor(new Date().getTime() / 1000) + jsonResponse['expires_in'];
-            console.log(staticData);
+            // console.log(staticData);
             return staticData.teamUpAccessToken as string;
         } catch (error) {
             if (error.statusCode === 401) {
@@ -92,24 +90,68 @@ export async function getAccessToken(this: IExecuteFunctions): Promise<string> {
             throw error;
         }
     } else {
-        console.log("Token is Not Expired");
+        // console.log("Token is Not Expired");
         const staticData = this.getWorkflowStaticData('global');
         return staticData.teamUpAccessToken as string;
     }
 }
 
-export async function teamUpRequest(this: IExecuteFunctions, method: string, endpointUri: string, body?: object, query?: object): Promise<string> {
+export async function teamUpRequest(this: IExecuteFunctions, method: string, endpointUri: string, body?: object, query?: object): Promise<any> {
     let accessToken = await getAccessToken.call(this);
     let options = {
         method: method,
         headers: {
-            'Authorization': 'bearer 4de0d941feffaf199c2e045275cd099fd0d3ea8c9e46a459ef70de9a50a344fb'
+            'Authorization': 'bearer ' + accessToken
         },
         uri: endpointUri,
         body: body,
         qs: query,
         json: true
     }
-    const responseString = this.helpers.request!(options);
-    return responseString;
+    const responseBody = await this.helpers.request!(options);
+    return responseBody;
+}
+
+export async function searchTeamUpUser(this: IExecuteFunctions, query: string): Promise<any> {
+    const qs = {
+        query: query
+    };
+    return await teamUpRequest.call(this, 'GET', 'https://auth.tmup.com/v1/search/1', {}, qs);
+}
+
+export async function sendTeamUpNote(this: IExecuteFunctions, userName: string, userIndex: number, title: string, content: string): Promise<any> {
+    const body = {
+        to: [
+            {
+                name: userName,
+                user: userIndex,
+            }
+        ],
+        title: title,
+        content: content,
+        files: []
+    }
+    let response = await teamUpRequest.call(this, 'POST', 'https://edge.tmup.com/v3/note/1/1', body);
+    return response;
+}
+
+export async function sendTeamUpChat(this: IExecuteFunctions, roomIndex: number, content: string): Promise<any> {
+    const body = {
+        content: content, 
+    }
+
+    let uri = 'https://edge.tmup.com/v3/message/' + roomIndex;
+    let response = await teamUpRequest.call(this, 'POST', uri, body);
+    return response;
+}
+
+export async function sendTeamUpFeed(this: IExecuteFunctions, feedGroupIndex: number, content: string, push: boolean): Promise<any> {
+    const body = {
+        content: content, 
+        push: push ? 1 : 0,
+    }
+
+    let uri = 'https://edge.tmup.com/v3/feed/' + feedGroupIndex;
+    let response = await teamUpRequest.call(this, 'POST', uri, body);
+    return response;
 }

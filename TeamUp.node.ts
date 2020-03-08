@@ -7,9 +7,11 @@ import {
 } from 'n8n-workflow';
 import { Request } from 'request';
 import {
-	getAccessToken,
-	teamUpRequest,
-} from './GenericFunctions';
+	sendTeamUpChat,
+	sendTeamUpNote,
+	sendTeamUpFeed,
+	searchTeamUpUser,
+} from './TeamUpFunctions';
 
 
 export class TeamUp implements INodeType {
@@ -68,7 +70,7 @@ export class TeamUp implements INodeType {
 				displayOptions: {
 					show: {
 						apiType: [
-							'feed', 'note'
+							'note'
 						]
 					}
 				},
@@ -85,14 +87,26 @@ export class TeamUp implements INodeType {
 				default: '',
 				required: true,
 				placeholder: 'content',
+			},
+			{
+				displayName: '강제알림',
+				displayOptions: {
+					show: {
+						apiType: [
+							'feed'
+						]
+					}
+				},
+				name: 'push',
+				type: 'boolean',
+				default: false,
+				required: true,
 			}
 		]
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		console.log("execute Called");
-		let token = await getAccessToken.call(this);
-		console.log("Token: " + token);
 
 		const TEAMUP_EDGE_URL = 'https://edge.tmup.com';
 
@@ -103,55 +117,70 @@ export class TeamUp implements INodeType {
 		const targetId: string = this.getNodeParameter('targetId', 0) as string;
 		const title: string = this.getNodeParameter('title', 0, '') as string;
 		const content: string = this.getNodeParameter('content', 0) as string;
-
-		console.log(typeof items);
-		console.log("api: " + apiType);
+		const isPush: boolean = this.getNodeParameter('push', 0, false) as boolean;
 
 		if (apiType == 'chat') {
-
-			const options = {
-				method: 'POST',
-				headers: {
-					'Authorization': 'bearer 4de0d941feffaf199c2e045275cd099fd0d3ea8c9e46a459ef70de9a50a344fb'
-				},
-				body: {
-					content: 'n8n test'
-				},
-				uri: TEAMUP_EDGE_URL + "/v3/message/773203",
-				json: true
+			if (Number(targetId) === NaN) {
+				throw new Error('채팅방 ID는 정수만 입력 가능합니다.');
 			}
 
-			let request: Request = await this.helpers.request(options);
-			console.log(request.response?.headers);
-			console.log(request.body);
-			return [this.helpers.returnJsonArray({ request })];
+			try {
+				let response = await sendTeamUpChat.call(this, Number.parseInt(targetId), content);
+				return [this.helpers.returnJsonArray({ response })];
+			} catch (error) {
+				let response = {
+					status: 'failed',
+					reason: error.statusCode,
+					developerMessage: error.statusCode == 403 ? '채팅방 번호가 잘못되었을 가능성이 있습니다.' : '알 수 없는 실패',
+				};
+				return [this.helpers.returnJsonArray({ response })]
+			}
 		} else if (apiType == 'feed') {
-
-		} else if (apiType == 'note') {
-			const body = {
-				to: [
-					{
-						name: '송민욱',
-						user: targetId
-					}
-				],
-				title: title,
-				content: content,
-				files: []
+			if (Number(targetId) === NaN) {
+				throw new Error('피드 그룹 ID는 정수만 입력 가능합니다.');
 			}
-			let response = await teamUpRequest.call(this, 'POST', 'https://edge.tmup.com/v3/note/1/1', body);
-			console.log("===Response===");
-			console.log(response);
+
+			try {
+				let response = await sendTeamUpFeed.call(this, Number.parseInt(targetId), content, isPush);
+				return [this.helpers.returnJsonArray({ response })];
+			} catch (error) {
+				let response = {
+					status: 'failed',
+					reason: error.statusCode,
+					developerMessage: error.statusCode == 403 ? '피드 그룹 번호가 잘못되었을 가능성이 있습니다.' : '알 수 없는 실패',
+				};
+				return [this.helpers.returnJsonArray({ response })]
+			}
+		} else if (apiType == 'note') {
+			let searchInfo = await searchTeamUpUser.call(this, "musong@estsecurity.com");
+			if (searchInfo.users === undefined || searchInfo.users === null) {
+				let response = {
+					status: 'failed',
+					reason: 0,
+					developerMessage: '사용자를 찾을 수 없습니다.',
+				};
+				return [this.helpers.returnJsonArray({ response })]
+			}
+
+			try {
+				let user = searchInfo.users[0];
+				let response = await sendTeamUpNote.call(this, user.name, user.index, title, content);
+				return [this.helpers.returnJsonArray({ response })];
+			} catch (error) {
+				let response = {
+					status: 'failed',
+					reason: error.statusCode,
+					developerMessage: '알 수 없는 실패',
+				};
+				return [this.helpers.returnJsonArray({ response })]
+			}
+		} else {
+			let response = {
+				status: 'failed',
+				reason: 0,
+				developerMessage: '해석할 수 없는 API 타입입니다.',
+			};
+			return [this.helpers.returnJsonArray({ response })]
 		}
-
-		let item: INodeExecutionData;
-
-		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-			item = items[itemIndex];
-
-			item.json['myString'] = "A";
-		}
-		return this.prepareOutputData(items);
-
 	}
 }
