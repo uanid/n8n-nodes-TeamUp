@@ -3,14 +3,6 @@ import {
     IHookFunctions,
 } from 'n8n-core';
 
-import {
-    IDataObject,
-    ICredentialDataDecryptedObject,
-} from 'n8n-workflow';
-
-import { stringify } from 'querystring';
-import { Request } from 'request';
-
 declare global {
     var accessToken: string;
 }

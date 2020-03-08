@@ -5,7 +5,6 @@ import {
 	INodeTypeDescription,
 	IDataObject,
 } from 'n8n-workflow';
-import { Request } from 'request';
 import {
 	sendTeamUpChat,
 	sendTeamUpNote,
@@ -43,15 +42,18 @@ export class TeamUp implements INodeType {
 				options: [
 					{
 						name: '채팅 보내기',
-						value: 'chat'
+						value: 'chat',
+						description: 'ChatRoomIndex를 대상으로 채팅을 보냅니다.'
 					},
 					{
 						name: '피드 작성하기',
-						value: 'feed'
+						value: 'feed',
+						description: 'FeedGroupIndex를 대상으로 피드 게시물을 작성합니다.'
 					},
 					{
 						name: '쪽지 보내기',
-						value: 'note'
+						value: 'note',
+						description: 'UserEmail을 대상으로 쪽지를 보냅니다.'
 					}
 				],
 				default: 'chat',
