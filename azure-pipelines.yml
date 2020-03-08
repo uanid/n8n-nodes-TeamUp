@@ -6,8 +6,8 @@
 trigger:
   - master
   - tags:
-    include:
-      - release-v*
+      include:
+        - release-v*
 
 pool:
   vmImage: "ubuntu-latest"
