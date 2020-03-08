@@ -1,0 +1,68 @@
+{
+    "name": "n8n-nodes-teamup",
+    "version": "0.1.0",
+    "description": "Example starter module for custom n8n nodes.",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "homepage": "https://uanid.com",
+    "author": {
+        "name": "Minuk Song",
+        "email": "uanid@outlook.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/n8n-io/n8n-nodes-starter.git"
+    },
+    "main": "index.js",
+    "scripts": {
+        "dev": "npm run watch",
+        "build": "tsc",
+        "tslint": "tslint -p tsconfig.json -c tslint.json",
+        "watch": "tsc --watch",
+        "test": "jest"
+    },
+    "files": [
+        "dist"
+    ],
+    "n8n": {
+        "credentials": [
+            "dist/TeamUpApi.credentials.js"
+        ],
+        "nodes": [
+            "dist/TeamUp.node.js"
+        ]
+    },
+    "devDependencies": {
+        "@types/jest": "^24.0.18",
+        "@types/node": "^10.17.17",
+        "gulp": "^4.0.0",
+        "jest": "^24.9.0",
+        "n8n-core": "^0.10.0",
+        "n8n-workflow": "^0.11.0",
+        "ts-jest": "^24.0.2",
+        "tslint": "^5.17.0",
+        "typescript": "~3.5.2"
+    },
+    "dependencies": {
+        "@types/express": "^4.17.3",
+        "@types/request": "^2.48.4",
+        "@types/request-promise-native": "^1.0.17",
+        "request": "^2.88.2"
+    },
+    "jest": {
+        "transform": {
+            "^.+\\.tsx?$": "ts-jest"
+        },
+        "testURL": "http://localhost/",
+        "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+        "testPathIgnorePatterns": [
+            "/dist/",
+            "/node_modules/"
+        ],
+        "moduleFileExtensions": [
+            "ts",
+            "tsx",
+            "js",
+            "json"
+        ]
+    }
+}
