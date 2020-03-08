@@ -4,25 +4,26 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
 trigger:
-- master
-
+  - master
+  - v*
+  
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "10.x"
+    displayName: "Install Node.js"
 
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm build'
+  - script: |
+      npm install
+      npm run build
+    displayName: "npm build"
 
-- script: |
-    npm install npm-cli-login
-    npx npm-cli-login -u $(npm.username) -p $(npm.password) -e $(npm.email)
-    npm publish
-  displayName: 'npm publish'
-  condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+  - script: |
+      npm install npm-cli-login
+      npx npm-cli-login -u $(npm.username) -p $(npm.password) -e $(npm.email)
+      npm publish
+    displayName: "npm publish"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
