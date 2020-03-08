@@ -5,8 +5,10 @@
 
 trigger:
   - master
-  - v*
-  
+  - tags:
+    include:
+      - release-v*
+
 pool:
   vmImage: "ubuntu-latest"
 
