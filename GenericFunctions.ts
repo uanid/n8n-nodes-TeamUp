@@ -98,64 +98,18 @@ export async function getAccessToken(this: IExecuteFunctions): Promise<string> {
     }
 }
 
-export function teamUpRequest(this: IExecuteFunctions, method: string, endpointUri: string, body?: object, query?: object): boolean {
-    const credentials = this.getCredentials('teamUpApi');
-    if (credentials === undefined) {
-        throw new Error('No credentials got returned!');
-    }
-
-
-    return true;
-}
-
-export function testFunction(this: IExecuteFunctions) {
-    console.log("테스트 함수 호출2");
-    console.log('global: ' + globalThis.accessToken);
-    globalThis.accessToken = 'aaa';
-    const staticData = this.getWorkflowStaticData('global');
-    console.log(staticData);
-    if (staticData.executionTime === undefined) {
-        console.log("undefinded임")
-        staticData.executionTime = 0;
-    } else {
-        staticData.executionTime = (staticData.executionTime as number) + 1;
-    }
-    console.log(staticData.executionTime);
-    console.log(staticData);
-}
-
-export async function githubApiRequest(this: IHookFunctions | IExecuteFunctions, method: string, endpoint: string, body: object, query?: object): Promise<any> { // tslint:disable-line:no-any
-    const credentials = this.getCredentials('githubApi');
-    if (credentials === undefined) {
-        throw new Error('No credentials got returned!');
-    }
-
-    const options = {
-        method,
+export async function teamUpRequest(this: IExecuteFunctions, method: string, endpointUri: string, body?: object, query?: object): Promise<string> {
+    let accessToken = await getAccessToken.call(this);
+    let options = {
+        method: method,
         headers: {
-            'Authorization': `token ${credentials.accessToken}`,
-            'User-Agent': credentials.user,
+            'Authorization': 'bearer 4de0d941feffaf199c2e045275cd099fd0d3ea8c9e46a459ef70de9a50a344fb'
         },
-        body,
+        uri: endpointUri,
+        body: body,
         qs: query,
-        uri: `https://api.github.com${endpoint}`,
         json: true
-    };
-
-    try {
-        return await this.helpers.request(options);
-    } catch (error) {
-        if (error.statusCode === 401) {
-            // Return a clear error
-            throw new Error('The Github credentials are not valid!');
-        }
-
-        if (error.response && error.response.body && error.response.body.message) {
-            // Try to return the error prettier
-            throw new Error(`Github error response [${error.statusCode}]: ${error.response.body.message}`);
-        }
-
-        // If that data does not exist for some reason return the actual error
-        throw error;
     }
+    const responseString = this.helpers.request!(options);
+    return responseString;
 }

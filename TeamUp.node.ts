@@ -7,9 +7,8 @@ import {
 } from 'n8n-workflow';
 import { Request } from 'request';
 import {
-	githubApiRequest,
-	testFunction,
 	getAccessToken,
+	teamUpRequest,
 } from './GenericFunctions';
 
 
@@ -129,7 +128,20 @@ export class TeamUp implements INodeType {
 		} else if (apiType == 'feed') {
 
 		} else if (apiType == 'note') {
-
+			const body = {
+				to: [
+					{
+						name: '송민욱',
+						user: targetId
+					}
+				],
+				title: title,
+				content: content,
+				files: []
+			}
+			let response = await teamUpRequest.call(this, 'POST', 'https://edge.tmup.com/v3/note/1/1', body);
+			console.log("===Response===");
+			console.log(response);
 		}
 
 		let item: INodeExecutionData;
